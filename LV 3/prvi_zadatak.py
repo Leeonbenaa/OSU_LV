@@ -2,64 +2,44 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv('data_C02_emission.csv')
-print('Ukupno mjerenja:', len(data))
-print('Veličine su tipa:', data.dtypes)
-print('Broj Izostalih vrijednosti:', data.isnull().sum())
-print('Broj duplikata:', data.duplicated().sum())
-data.dropna()
-data.drop_duplicates()
-data = data.reset_index ( drop = True )
-print('Ukupno mjerenja bez null vrijednosti i duplikata:', len(data))
 
-cols = ['Make', 'Model', 'Vehicle Class', 'Transmission', 'Fuel Type']
-data[cols] = data[cols].astype('category')
-print(data.dtypes)
+print('\na) zadatak\n')
+print(f'Dataset contains {len(data)} elements.\n')
+print(f'Types of data:\n{data.dtypes}\n')
+print(f'Number of non null elements: {len(data.isnull())}\n')
+data['Make'] = data['Make'].astype('category')
+data['Model'] = data['Model'].astype('category')
+data['Vehicle Class'] = data['Vehicle Class'].astype('category')
+data['Transmission'] = data['Transmission'].astype('category')
+data['Fuel Type'] = data['Fuel Type'].astype('category')
 
-fuelConsumptionMax = data[['Make', 'Model', 'Fuel Consumption City (L/100km)']].nlargest(
-    3, ['Fuel Consumption City (L/100km)'])
-print('Tri automobila po najvećoj potrošnji:',fuelConsumptionMax)
+print('\nb) zadatak\n')
+print(f'3 cars with the lowest fuel consumption in the city:\n{data.sort_values(by=["Fuel Consumption City (L/100km)"]).head(3)[["Make","Model", "Fuel Consumption City (L/100km)"]]}\n')
+print(f'3 cars with the highest fuel consumption in the city:\n{data.sort_values(by=["Fuel Consumption City (L/100km)"], ascending=False).head(3)[["Make","Model", "Fuel Consumption City (L/100km)"]]}\n')
 
-fuelConsumptionMin = data[['Make', 'Model', 'Fuel Consumption City (L/100km)']].nsmallest(
-    3, ['Fuel Consumption City (L/100km)'])
-print('Tri automobila po najmanjoj potrošnji:',fuelConsumptionMin)
+print('\nc) zadatak\n')
+print(f'Amount of cars with engine size between 2.5 L and 3.5 L: {len(data[(data["Engine Size (L)"] > 2.5) & (data["Engine Size (L)"] < 3.5)])}\n')
+print(f'Average CO2 emissions for these cars is: {data[(data["Engine Size (L)"] > 2.5) & (data["Engine Size (L)"] < 3.5)]["CO2 Emissions (g/km)"].mean()} g/km\n')
 
-engineSize=data[(data['Engine Size (L)'] > 2.5 ) & ( data ['Engine Size (L)'] < 3.5 )]
-print('Broj  vozila koji imaju velicinu motora izmedu 2.5 i 3.5 L:',len(engineSize))
+print('\nd) zadatak\n')
+print(f'Amount of Audi cars: {len(data[data["Make"] == "Audi"])}\n')
+print(f'Average CO2 emissions for Audi cars with 4 cylinders: {data[(data["Make"] == "Audi") & (data["Cylinders"] == 4)]["CO2 Emissions (g/km)"].mean()} g/km\n')
 
-averageCO2Emision = data[(data['Engine Size (L)'] > 2.5) & (
-    data['Engine Size (L)'] < 3.5)]['CO2 Emissions (g/km)'].mean()
+print('\ne) zadatak\n')
+print(f'Number of cars by cylinders: \n{data.groupby("Cylinders").size()}\n')
+print(f'Average CO2 emissions by number of cylinders: \n{data.groupby("Cylinders")["CO2 Emissions (g/km)"].mean()}')
 
-print('Prosječna emisja CO2:',averageCO2Emision)
-numberOfAudi = len(data[(data)['Make'] == 'Audi'])
-print('Broj audi automobila:',numberOfAudi)
+print('\nf) zadatak\n')
+print(f'Average city consumption using diesel: {data[data["Fuel Type"] == "D"]["Fuel Consumption City (L/100km)"].mean()} L/100km\n')
+print(f'Average city consumption using regular gasoline: {data[data["Fuel Type"] == "X"]["Fuel Consumption City (L/100km)"].mean()} L/100km\n')
+print(f'Median city consumption using diesel: {data[data["Fuel Type"] == "D"]["Fuel Consumption City (L/100km)"].median()} L/100km\n')
+print(f'Median city consumption using regular gasoline: {data[data["Fuel Type"] == "X"]["Fuel Consumption City (L/100km)"].median()} L/100km\n')
 
-averageCo2EmisionAudi = data[(data['Make'] == 'Audi') & (
-    data['Cylinders'] == 4)]['CO2 Emissions (g/km)'].mean()
-print('Prosječna emisija CO2 audi automobila',averageCo2EmisionAudi)
+print('\ng) zadatak\n')
+print(f'Car with highest city fuel consumption, 4 cylinders and using diesel: \n{data[(data["Cylinders"] == 4) & (data["Fuel Type"] == "D")].sort_values(by=["Fuel Consumption City (L/100km)"], ascending=False).head(1)}\n')
 
-evenCylinders = data[data['Cylinders'] % 2 == 0]
-averageCo2EmisionByCylinders = evenCylinders.groupby(
-    'Cylinders')['CO2 Emissions (g/km)'].mean()
-print('Broj parnih cilindara:',len(evenCylinders))
-print('Prosječan broj emisije CO2 automobila parnih cilindara:',averageCo2EmisionByCylinders)
+print('\nh) zadatak\n')
+print(f'Number of cars with manual transmission: {len(data[data["Transmission"].str.startswith("M")])}')
 
-averageCityConsumptionDiezel = data[(data['Fuel Type'] == 'D')]['Fuel Consumption City (L/100km)'].mean()
-averageCityConsumptionBenzin = data[(data['Fuel Type'] == 'X')]['Fuel Consumption City (L/100km)'].mean()
-print('Prosječna gradska potrošnja automobila koji koriste dizel:',averageCityConsumptionDiezel)
-print('Prosječna gradska potrošnja automobila koji koriste regularni benzin:',averageCityConsumptionBenzin)
-medianCityConsumptionDiezel = data[(data['Fuel Type'] == 'D')]['Fuel Consumption City (L/100km)'].median()
-medianCityConsumptionBenzin = data[(data['Fuel Type'] == 'X')]['Fuel Consumption City (L/100km)'].median()
-print('Median gradska potrošnja automobila koji koriste dizel:',medianCityConsumptionDiezel)
-print('Median gradska potrošnja automobila koji koriste regularni benzin:',medianCityConsumptionBenzin)
-
-maxCityConsumption = data[(data['Cylinders'] == 4) & (
-    data['Fuel Type'] == 'D')]['Fuel Consumption City (L/100km)'].sort_values()
-maxCityConsumption=maxCityConsumption.tail(1)
-print(maxCityConsumption)
-
-
-numberOfManualDrivers = len(data[(data['Transmission'] == 'M')])
-print(numberOfManualDrivers)
-
-print (data.corr( numeric_only = True ))
-
+print('\ni) zadatak\n')
+print(f'Correlation: \n{data.corr(numeric_only=True)}')
