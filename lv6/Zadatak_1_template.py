@@ -8,11 +8,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
 
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_score
+
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
 
 def plot_decision_regions(X, y, classifier, resolution=0.02):
     plt.figure()
@@ -62,7 +65,7 @@ X_train_n = sc.fit_transform(X_train)
 X_test_n = sc.transform((X_test))
 
 # Model logisticke regresije
-LogReg_model = LogisticRegression(penalty=None) 
+LogReg_model = LogisticRegression(penalty='none') 
 LogReg_model.fit(X_train_n, y_train)
 
 # Evaluacija modela logisticke regresije
@@ -82,18 +85,17 @@ plt.title("Tocnost: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p))))
 plt.tight_layout()
 plt.show()
 
-#1.
-
-KNN_model =KNeighborsClassifier( n_neighbors = 5 )
-KNN_model.fit( X_train_n , y_train )
-y_test_p_KNN = KNN_model . predict ( X_test_n )
-y_train_p_KNN = KNN_model . predict ( X_train_n)
+KNN_model = KNeighborsClassifier(n_neighbors=5)
+# Kada je k=1 događa se overfit, a kada je k=100, događa se underfit
+KNN_model.fit(X_train_n, y_train)
+y_train_p_KNN = KNN_model.predict(X_train_n)
+y_test_p_KNN = KNN_model.predict(X_test_n)
 
 print("KNN: ")
 print("Tocnost train: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p_KNN))))
 print("Tocnost test: " + "{:0.3f}".format((accuracy_score(y_test, y_test_p_KNN))))
 
-plot_decision_regions(X_train_n,y_train_p_KNN,classifier=KNN_model)
+plot_decision_regions(X_train_n, y_train, classifier=KNN_model)
 plt.xlabel('x_1')
 plt.ylabel('x_2')
 plt.legend(loc='upper left')
@@ -101,53 +103,27 @@ plt.title("Tocnost: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p_KNN)
 plt.tight_layout()
 plt.show()
 
-KNN_model =KNeighborsClassifier( n_neighbors = 1 )
-KNN_model.fit( X_train_n , y_train )
+scores = []
+for i in range(1,20):
+    KNN_model = KNeighborsClassifier(n_neighbors=i)
+    score = cross_val_score ( KNN_model , X_train_n , y_train , cv =5 )
+    scores.append(score.mean())
 
-y_test_p_KNN = KNN_model . predict ( X_test_n )
-y_train_p_KNN = KNN_model . predict ( X_train_n)
-plot_decision_regions(X_train_n,y_train_p_KNN,classifier=KNN_model)
-plt.xlabel('x_1')
-plt.ylabel('x_2')
-plt.legend(loc='upper left')
-plt.title("Tocnost: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p_KNN))))
-plt.tight_layout()
+plt.plot(range(1,20), scores)
 plt.show()
+print(f'Best value of K is {scores.index(max(scores))+1} with a score of {max(scores)}')
 
-KNN_model =KNeighborsClassifier(n_neighbors = 100 )
-KNN_model.fit( X_train_n , y_train )
+SVM_model = svm.SVC(kernel='rbf', gamma=1, C=0.1)
+# Povećanjem ili smanjenjem game, opada točnost oba skupa, a povećanjem C raste točnost
+# Mijenjem kernel funckije se mijenja oblik granice odluke
+SVM_model.fit(X_train_n, y_train)
+y_test_p_SVM = SVM_model.predict(X_test_n)
+y_train_p_SVM = SVM_model.predict(X_train_n)
+print("SVM: ")
+print("Tocnost train: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p_SVM))))
+print("Tocnost test: " + "{:0.3f}".format((accuracy_score(y_test, y_test_p_SVM))))
 
-y_test_p_KNN = KNN_model . predict ( X_test_n )
-y_train_p_KNN = KNN_model . predict ( X_train_n)
-plot_decision_regions(X_train_n,y_train_p_KNN,classifier=KNN_model)
-plt.xlabel('x_1')
-plt.ylabel('x_2')
-plt.legend(loc='upper left')
-plt.title("Tocnost: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p_KNN))))
-plt.tight_layout()
-plt.show()
-
-KNN_model_2=KNeighborsClassifier()
-grid={'n_neighbors':np.arange(1,100)}
-KNN_gs= GridSearchCV(KNN_model_2,grid,cv=5)
-KNN_gs.fit(X_train_n,y_train)
-
-print(KNN_gs.best_params_,KNN_gs.best_score_)
-
-cv_scores=cross_val_score(KNN_model,X_train_n,y_train,cv=5)
-print('cv_scores.mean:{}'.format(np.mean(cv_scores)))
-
-
-
-
-
-#SVM
-
-SVM_model = svm . SVC( kernel ='rbf', gamma = 1 , C=0.1 )
-SVM_model . fit ( X_train_n , y_train )
-y_test_p_SVM = SVM_model . predict ( X_test )
-y_train_p_SVM = SVM_model . predict ( X_train_n)
-plot_decision_regions(X_train_n,y_train_p_SVM,classifier=SVM_model)
+plot_decision_regions(X_train_n, y_train, classifier=SVM_model)
 plt.xlabel('x_1')
 plt.ylabel('x_2')
 plt.legend(loc='upper left')
@@ -155,13 +131,11 @@ plt.title("Tocnost: " + "{:0.3f}".format((accuracy_score(y_train, y_train_p_SVM)
 plt.tight_layout()
 plt.show()
 
-SVM_model_2=svm.SVC()
-grid={'C':[10,100,100],'gamma':[10,1,0.1,0.01]}
-svm_gscv = GridSearchCV ( SVM_model_2 , grid , cv =5 , scoring ='accuracy',
-n_jobs = -1 )
-svm_gscv . fit ( X_train , y_train )
-print ( svm_gscv . best_params_ )
-print ( svm_gscv . best_score_ )
-print ( svm_gscv . cv_results_ )
+param_grid = {'C':[1,10,100], 'gamma':[10,1,0.1,0.01]}
 
+svm_gscv = GridSearchCV(SVM_model, param_grid, cv=5, scoring='accuracy')
 
+svm_gscv.fit(X_train_n, y_train)
+
+print (svm_gscv.best_params_)
+print (svm_gscv.best_score_)
