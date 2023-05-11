@@ -437,7 +437,7 @@ data_df = pd.DataFrame(data) #kreiranje ponovno data_df ali ovaj put s očišće
 print(f'Broj preostalih: {len(data_df)}') 
 
 # c)
-plt.scatter(x=data[:, 7], y=data[:, 5])
+plt.scatter(x=data[:, 7], y=data[:, 5])#scatter izmedu 8.(Godine) i 6. vrijednosti(BMI)
 plt.title('Odnos dobi i BMI')
 plt.xlabel('Age(years)')
 plt.ylabel('BMI(weight in kg/(height in m)^2)')
